@@ -28,6 +28,8 @@ public class JFrame_MainWindow extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(JFrame_MainWindow.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        System.exit(0);
     }
     
     public JTextArea getConsole() {

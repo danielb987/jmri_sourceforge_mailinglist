@@ -37,6 +37,7 @@ public class DownloadJMRI {
 	final JFrame_MainWindow jFrame_MainWindow;
 	long lastTime;
 	final PrintWriter info;
+	final PrintWriter outputFile;
 	final Map<String, String> cookies = new HashMap<>();
 	
 	
@@ -49,6 +50,7 @@ public class DownloadJMRI {
 		this.jFrame_MainWindow = jFrame_MainWindow;
 		lastTime = System.currentTimeMillis();
 		info = new PrintWriter("info.txt","UTF-8");
+		outputFile = new PrintWriter("jmri_archive.txt","UTF-8");
         
         // configure the SSLContext with a TrustManager
         SSLContext ctx = SSLContext.getInstance("TLS");
@@ -123,15 +125,20 @@ public class DownloadJMRI {
             
             Element headerElement = element.child(0).child(0).child(0).child(0).child(0).child(0).child(0);
 //            System.out.format("tag: %s\n", headerElement.tagName());
-            System.out.format("text: %s\n", headerElement.text());
+//            System.out.format("text: %s\n", headerElement.text());
             
             Element fromElement = element.child(0).child(0).child(0).child(0).child(1);
 //            System.out.format("tag: %s\n", fromElement.tagName());
-            System.out.format("text: %s\n", fromElement.text());
+//            System.out.format("from: %s\n", fromElement.text());
             
             Element bodyElement = element.child(0).child(1).child(0).child(0);
 //            System.out.format("tag: %s\n", bodyElement.tagName());
-            System.out.format("text: %s\n", bodyElement.text());
+//            System.out.format("body: %s\n", bodyElement.text());
+            
+            outputFile.format("%s%n", fromElement.text());
+            outputFile.format("%s%n", bodyElement.text());
+            outputFile.println();
+            outputFile.flush();
 		}
 	}
 	
@@ -139,7 +146,7 @@ public class DownloadJMRI {
 	public void download() throws IOException {
 		
 		int numPages = 1;
-//		numPages = 109;
+		numPages = 109;
 		
 		for (int i=0; i < numPages; i++) {
 			
