@@ -39,6 +39,8 @@ public class DownloadJMRI {
 	final PrintWriter info;
 	final PrintWriter outputFile;
 	final Map<String, String> cookies = new HashMap<>();
+    
+    int numMessages = 0;
 	
 	
 	public DownloadJMRI(JFrame_MainWindow jFrame_MainWindow)
@@ -59,7 +61,7 @@ public class DownloadJMRI {
 	}
 	
 	
-	public String downloadPagePrim(String urlStr, boolean useCookies) {
+	public String downloadPagePrim(String urlStr) throws IOException {
 		
 		try {
 			System.out.println("Url: "+urlStr);
@@ -111,17 +113,41 @@ public class DownloadJMRI {
 	}
 	
 	
-	public void downloadPage(String url, int pageNo) throws IOException {
+	public String downloadPage(String urlStr) throws IOException {
+        
+        int retries = 0;
+        
+        while (retries < 3) {
+            try {
+                return downloadPagePrim(urlStr);
+            } catch (IOException ex) {
+                if (ex.getMessage().startsWith("Server returned HTTP response code: 504")) {
+                    // Do nothing
+                } else {
+                    throw ex;
+                }
+            }
+            retries++;
+        }
+        
+        throw new IOException("Could not download page");
+    }
+    
+    
+	public void downloadAndParsePage(String url, int pageNo) throws IOException {
 		
-		String page = downloadPagePrim(url + Integer.toString(pageNo), true);
+		String page = downloadPage(url + Integer.toString(pageNo));
 		Document document = Jsoup.parse(page);
 		info.write(document.toString());
 		info.flush();
 		
 		Elements elements = document.select("[id^=msg]");
 		for (Element element : elements) {
+            
+            numMessages++;
+            
             String id = element.attr("id");
-            System.out.format("id: %s\n", id);
+            System.out.format("%d, %d: id: %s\n", pageNo, numMessages, id);
             
             Element headerElement = element.child(0).child(0).child(0).child(0).child(0).child(0).child(0);
 //            System.out.format("tag: %s\n", headerElement.tagName());
@@ -148,9 +174,9 @@ public class DownloadJMRI {
 		int numPages = 1;
 		numPages = 109;
 		
-		for (int i=0; i < numPages; i++) {
+		for (int i=46; i < numPages; i++) {
 			
-			downloadPage("https://sourceforge.net/p/jmri/mailman/jmri-developers/?limit=250&page=", i);
+			downloadAndParsePage("https://sourceforge.net/p/jmri/mailman/jmri-developers/?limit=250&page=", i);
 			
 			try {
 				Thread.sleep(100);
@@ -158,6 +184,12 @@ public class DownloadJMRI {
 				Logger.getLogger(DownloadJMRI.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
+        
+        info.close();
+        outputFile.close();
+        
+        System.out.format("%n%n===================%n");
+        System.out.format("Num messages: %d%n", numMessages);
 	}
 	
 	
